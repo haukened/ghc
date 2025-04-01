@@ -38,7 +38,7 @@ var (
 // Returns an error if any of the steps fail.
 func setOrganization(ctx context.Context, c *cli.Command) error {
 	const nargs = 2
-	if c.Args().Len() != nargs {
+	if c.NArg() != nargs {
 		return fmt.Errorf("%s: expected %d, got %d", ErrNumArguments, nargs, c.Args().Len())
 	}
 
@@ -92,7 +92,7 @@ func setOrganization(ctx context.Context, c *cli.Command) error {
 // Returns an error if any of the steps fail.
 func removeOrganization(ctx context.Context, c *cli.Command) error {
 	const nargs = 1
-	if c.Args().Len() != nargs {
+	if c.NArg() != nargs {
 		return fmt.Errorf("%s: expected %d, got %d", ErrNumArguments, nargs, c.Args().Len())
 	}
 
