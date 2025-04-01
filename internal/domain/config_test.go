@@ -1,68 +1,15 @@
 package domain
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"os"
-	"path/filepath"
 	"testing"
 
-	"golang.org/x/crypto/ssh"
+	"github.com/haukened/ghc/internal/utils"
 )
 
-func generateTestSSHKey(t *testing.T) (privateKeyPath, publicKeyPath string) {
-	// This function generates a temporary RSA key pair for testing purposes.
-	t.Helper()
-
-	// Create a temporary directory for the keys
-	tempDir := t.TempDir()
-	privateKeyPath = filepath.Join(tempDir, "id_rsa")
-	publicKeyPath = privateKeyPath + ".pub"
-
-	// Generate RSA private key
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("failed to generate RSA key: %v", err)
-	}
-
-	// Write private key to file, with permissions 0600
-	privateKeyFile, err := os.OpenFile(privateKeyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		t.Fatalf("failed to create private key file: %v", err)
-	}
-	defer privateKeyFile.Close()
-
-	// Encode the private key in PEM format
-	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
-	privBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privDER,
-	}
-	if err := pem.Encode(privateKeyFile, privBlock); err != nil {
-		t.Fatalf("failed to write PEM private key: %v", err)
-	}
-
-	// Generate public key in OpenSSH format
-	pub, err := ssh.NewPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		t.Fatalf("failed to create SSH public key: %v", err)
-	}
-	pubBytes := ssh.MarshalAuthorizedKey(pub)
-
-	// Write public key
-	if err := os.WriteFile(publicKeyPath, pubBytes, 0644); err != nil {
-		t.Fatalf("failed to write public key: %v", err)
-	}
-
-	// return the paths of the generated keys
-	return privateKeyPath, publicKeyPath
-}
-
 func TestConfigValidate(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	tests := []struct {
 		name    string
@@ -97,7 +44,7 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestConfigValidate_InvalidOrganization(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	tests := []struct {
 		name    string
@@ -135,7 +82,7 @@ func TestConfigValidate_InvalidOrganization(t *testing.T) {
 }
 
 func TestConfigValidate_ValidConfig(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	config := Config{
 		Organizations: []*Organization{
@@ -151,7 +98,7 @@ func TestConfigValidate_ValidConfig(t *testing.T) {
 }
 
 func TestOrganizationValidate_InvalidOrgName(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	tests := []struct {
 		name    string
@@ -228,7 +175,7 @@ func TestOrganizationValidate_InvalidPermissions(t *testing.T) {
 }
 
 func TestConfigRemoveOrganization(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	config := Config{
 		Organizations: []*Organization{
@@ -276,7 +223,7 @@ func TestConfigRemoveOrganization(t *testing.T) {
 }
 
 func TestConfigSetOrganization(t *testing.T) {
-	privateKey, _ := generateTestSSHKey(t)
+	privateKey, _ := utils.GenerateTestSSHKey(t)
 
 	tests := []struct {
 		name       string
