@@ -11,9 +11,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/haukened/ghc/internal/configfile"
 	"github.com/haukened/ghc/internal/domain"
 	"github.com/haukened/ghc/internal/utils"
+	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 )
 
@@ -125,6 +127,32 @@ func removeOrganization(ctx context.Context, c *cli.Command) error {
 //
 // Returns an error if the configuration cannot be loaded.
 func listOrganizations(ctx context.Context, c *cli.Command) error {
+	// read the current config
+	conf, err := configfile.LoadConfig()
+	if err != nil {
+		return err
+	}
 
+	if conf.Organizations == nil {
+		return domain.ErrNoOrganizations
+	}
+
+	// create formatters
+	header := color.New(color.FgGreen, color.Underline).SprintfFunc()
+
+	tbl := table.New("Org Name", "SSH Key Path", "Default")
+	tbl.WithHeaderFormatter(header).WithPadding(2)
+
+	// add rows to the table
+	for _, org := range conf.Organizations {
+		defChar := " "
+		if org.IsDefault {
+			defChar = "*"
+		}
+		tbl.AddRow(org.Name, org.SSHKeyPath, defChar)
+	}
+	fmt.Println("")
+	tbl.Print()
+	fmt.Println("")
 	return nil
 }
