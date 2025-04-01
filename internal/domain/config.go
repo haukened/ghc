@@ -4,6 +4,7 @@ package domain
 import (
 	"fmt"
 	"os"
+	"regexp"
 )
 
 var (
@@ -11,6 +12,7 @@ var (
 	ErrEmptySSHKeyPath       = fmt.Errorf("SSH key path cannot be empty")
 	ErrNoOrganizations       = fmt.Errorf("no organizations found in the configuration")
 	ErrDuplicateOrganization = fmt.Errorf("duplicate organization name found")
+	ErrInvalidOrgName        = fmt.Errorf("invalid organization name")
 )
 
 // Config holds the configuration details for the application.
@@ -45,13 +47,24 @@ type Organization struct {
 }
 
 func (o *Organization) Validate() error {
+	// check if the organization name is empty
 	if o.Name == "" {
 		return ErrEmptyOrganizationName
 	}
+	// check if the organization name matches the requirements | default
+	reg := regexp.MustCompile(`^[a-z0-9](?:[a-z0-9\-]{0,37}[a-z0-9])?$`)
+	if o.Name != "default" {
+		if !reg.MatchString(o.Name) {
+			return ErrInvalidOrgName
+		}
+	}
+	// check if the SSH key path is empty
 	if o.SSHKeyPath == "" {
 		return ErrEmptySSHKeyPath
 	}
+	// check if the SSH key path is valid
 	if fileInfo, err := os.Stat(o.SSHKeyPath); err == nil {
+		// check permissions are secure and correct
 		if fileInfo.Mode().Perm() != 0600 {
 			return fmt.Errorf("%w: %s has incorrect permissions: %v", os.ErrPermission, o.SSHKeyPath, fileInfo.Mode().Perm())
 		}

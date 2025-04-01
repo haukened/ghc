@@ -150,7 +150,9 @@ func TestConfigValidate_ValidConfig(t *testing.T) {
 	}
 }
 
-func TestOrganizationValidate(t *testing.T) {
+func TestOrganizationValidate_NameValidation(t *testing.T) {
+	privateKey, _ := generateTestSSHKey(t)
+
 	tests := []struct {
 		name    string
 		org     Organization
@@ -162,62 +164,24 @@ func TestOrganizationValidate(t *testing.T) {
 			expects: ErrEmptyOrganizationName,
 		},
 		{
-			name:    "Empty SSH key path",
-			org:     Organization{Name: "org1"},
-			expects: ErrEmptySSHKeyPath,
+			name:    "Valid organization name",
+			org:     Organization{Name: "valid-org", SSHKeyPath: privateKey},
+			expects: nil,
 		},
 		{
-			name:    "SSH key file does not exist",
-			org:     Organization{Name: "org1", SSHKeyPath: "nonexistent.key"},
-			expects: os.ErrNotExist,
+			name:    "Invalid organization name",
+			org:     Organization{Name: "Invalid!Org", SSHKeyPath: privateKey},
+			expects: ErrInvalidOrgName,
 		},
 		{
-			name: "SSH key file has incorrect permissions",
-			org: func() Organization {
-				// Create a temporary file to act as an invalid SSH key
-				file, err := os.CreateTemp("", "invalid_ssh_key_*.key")
-				if err != nil {
-					t.Fatalf("failed to create temp file: %v", err)
-				}
-				defer file.Close()
-
-				// Set incorrect permissions for the SSH key
-				if err := os.Chmod(file.Name(), 0644); err != nil {
-					t.Fatalf("failed to set file permissions: %v", err)
-				}
-
-				return Organization{Name: "org1", SSHKeyPath: file.Name()}
-			}(),
-			expects: os.ErrPermission,
-		},
-		{
-			name: "Valid SSH key",
-			org: func() Organization {
-				// Create a temporary file to act as a valid SSH key
-				file, err := os.CreateTemp("", "valid_ssh_key_*.key")
-				if err != nil {
-					t.Fatalf("failed to create temp file: %v", err)
-				}
-				defer file.Close()
-
-				// Set proper permissions for the SSH key
-				if err := os.Chmod(file.Name(), 0600); err != nil {
-					t.Fatalf("failed to set file permissions: %v", err)
-				}
-
-				return Organization{Name: "org1", SSHKeyPath: file.Name()}
-			}(),
+			name:    "Default organization name",
+			org:     Organization{Name: "default", SSHKeyPath: privateKey},
 			expects: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "SSH key file has incorrect permissions" || tt.name == "Valid SSH key" {
-				// Clean up the temporary file after the test
-				defer os.Remove(tt.org.SSHKeyPath)
-			}
-
 			err := tt.org.Validate()
 			if !errors.Is(err, tt.expects) {
 				t.Errorf("expected %v, got %v", tt.expects, err)
@@ -235,5 +199,30 @@ func TestOrganizationValidate_FileNotExist(t *testing.T) {
 	err := org.Validate()
 	if !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("expected os.ErrNotExist, got %v", err)
+	}
+}
+
+func TestOrganizationValidate_InvalidPermissions(t *testing.T) {
+	// Create a temporary file to act as an SSH key with invalid permissions
+	file, err := os.CreateTemp("", "invalid_permissions_ssh_key_*.key")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(file.Name())
+	defer file.Close()
+
+	// Set incorrect permissions for the SSH key
+	if err := os.Chmod(file.Name(), 0644); err != nil {
+		t.Fatalf("failed to set file permissions: %v", err)
+	}
+
+	org := Organization{
+		Name:       "org1",
+		SSHKeyPath: file.Name(),
+	}
+
+	err = org.Validate()
+	if !errors.Is(err, os.ErrPermission) {
+		t.Errorf("expected os.ErrPermission, got %v", err)
 	}
 }
