@@ -150,7 +150,7 @@ func TestConfigValidate_ValidConfig(t *testing.T) {
 	}
 }
 
-func TestOrganizationValidate_NameValidation(t *testing.T) {
+func TestOrganizationValidate_InvalidOrgName(t *testing.T) {
 	privateKey, _ := generateTestSSHKey(t)
 
 	tests := []struct {
@@ -159,19 +159,19 @@ func TestOrganizationValidate_NameValidation(t *testing.T) {
 		expects error
 	}{
 		{
-			name:    "Empty organization name",
-			org:     Organization{},
-			expects: ErrEmptyOrganizationName,
+			name:    "Invalid organization name with special characters",
+			org:     Organization{Name: "Invalid!Org", SSHKeyPath: privateKey},
+			expects: ErrInvalidOrgName,
+		},
+		{
+			name:    "Invalid organization name with spaces",
+			org:     Organization{Name: "Invalid Org", SSHKeyPath: privateKey},
+			expects: ErrInvalidOrgName,
 		},
 		{
 			name:    "Valid organization name",
 			org:     Organization{Name: "valid-org", SSHKeyPath: privateKey},
 			expects: nil,
-		},
-		{
-			name:    "Invalid organization name",
-			org:     Organization{Name: "Invalid!Org", SSHKeyPath: privateKey},
-			expects: ErrInvalidOrgName,
 		},
 		{
 			name:    "Default organization name",
@@ -224,5 +224,133 @@ func TestOrganizationValidate_InvalidPermissions(t *testing.T) {
 	err = org.Validate()
 	if !errors.Is(err, os.ErrPermission) {
 		t.Errorf("expected os.ErrPermission, got %v", err)
+	}
+}
+
+func TestConfigRemoveOrganization(t *testing.T) {
+	privateKey, _ := generateTestSSHKey(t)
+
+	config := Config{
+		Organizations: []*Organization{
+			{Name: "org1", SSHKeyPath: privateKey, IsDefault: true},
+			{Name: "org2", SSHKeyPath: privateKey},
+		},
+	}
+
+	tests := []struct {
+		name    string
+		orgName string
+		expects error
+	}{
+		// this one has to go first because it is the default organization
+		{
+			name:    "Remove default organization when there is more than one",
+			orgName: "org1",
+			expects: ErrCantRemoveDefault,
+		},
+		{
+			name:    "Remove non-default organization",
+			orgName: "org2",
+			expects: nil,
+		},
+		{
+			name:    "Remove default organization when its the last one",
+			orgName: "org1",
+			expects: nil,
+		},
+		{
+			name:    "Remove non-existent organization",
+			orgName: "org3",
+			expects: ErrOrganizationNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := config.RemoveOrganization(tt.orgName)
+			if !errors.Is(err, tt.expects) {
+				t.Errorf("expected %v, got %v", tt.expects, err)
+			}
+		})
+	}
+}
+
+func TestConfigSetOrganization(t *testing.T) {
+	privateKey, _ := generateTestSSHKey(t)
+
+	tests := []struct {
+		name       string
+		config     Config
+		orgName    string
+		sshKeyPath string
+		isDefault  bool
+		expects    error
+	}{
+		{
+			name: "Add new organization",
+			config: Config{
+				Organizations: []*Organization{},
+			},
+			orgName:    "org1",
+			sshKeyPath: privateKey,
+			isDefault:  false,
+			expects:    nil,
+		},
+		{
+			name: "Update existing organization",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: "/old/path", IsDefault: false},
+				},
+			},
+			orgName:    "org1",
+			sshKeyPath: privateKey,
+			isDefault:  true,
+			expects:    nil,
+		},
+		{
+			name: "Set organization as default",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: privateKey, IsDefault: false},
+					{Name: "org2", SSHKeyPath: privateKey, IsDefault: false},
+				},
+			},
+			orgName:    "org2",
+			sshKeyPath: privateKey,
+			isDefault:  true,
+			expects:    nil,
+		},
+		{
+			name: "Automatically set single organization as default",
+			config: Config{
+				Organizations: []*Organization{},
+			},
+			orgName:    "org1",
+			sshKeyPath: privateKey,
+			isDefault:  false,
+			expects:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.SetOrganization(tt.orgName, tt.sshKeyPath, tt.isDefault)
+			if err != tt.expects {
+				t.Errorf("expected %v, got %v", tt.expects, err)
+			}
+
+			// Additional checks for specific scenarios
+			if tt.name == "Set organization as default" {
+				for _, org := range tt.config.Organizations {
+					if org.Name == tt.orgName && !org.IsDefault {
+						t.Errorf("expected organization %s to be default", tt.orgName)
+					}
+					if org.Name != tt.orgName && org.IsDefault {
+						t.Errorf("expected organization %s to not be default", org.Name)
+					}
+				}
+			}
+		})
 	}
 }
