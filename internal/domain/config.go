@@ -89,16 +89,27 @@ func (c *Config) SetOrganization(name, sshKeyPath string, isDefault bool) error 
 			org.SSHKeyPath = sshKeyPath
 			org.IsDefault = isDefault
 			exists = true
+			// validate the organization
+			err := org.Validate()
+			if err != nil {
+				return err
+			}
 			break
 		}
 	}
 
 	// if the organization does not exist, add it
 	if !exists {
+		// create a new organization
 		newOrg := &Organization{
 			Name:       name,
 			SSHKeyPath: sshKeyPath,
 			IsDefault:  isDefault,
+		}
+		// validate the new organization
+		err := newOrg.Validate()
+		if err != nil {
+			return err
 		}
 		c.Organizations = append(c.Organizations, newOrg)
 	}

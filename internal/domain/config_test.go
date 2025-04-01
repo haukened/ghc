@@ -331,12 +331,34 @@ func TestConfigSetOrganization(t *testing.T) {
 			isDefault:  false,
 			expects:    nil,
 		},
+		{
+			name: "set org with invalid key",
+			config: Config{
+				Organizations: []*Organization{},
+			},
+			orgName:    "org1",
+			sshKeyPath: "/invalid/path/to/key",
+			isDefault:  false,
+			expects:    os.ErrNotExist,
+		},
+		{
+			name: "set existing org with invalid key",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: privateKey, IsDefault: false},
+				},
+			},
+			orgName:    "org1",
+			sshKeyPath: "/invalid/path/to/key",
+			isDefault:  false,
+			expects:    os.ErrNotExist,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.config.SetOrganization(tt.orgName, tt.sshKeyPath, tt.isDefault)
-			if err != tt.expects {
+			if !errors.Is(err, tt.expects) {
 				t.Errorf("expected %v, got %v", tt.expects, err)
 			}
 
