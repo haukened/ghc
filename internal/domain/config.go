@@ -2,6 +2,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,6 +12,10 @@ import (
 // It contains a list of organizations and their associated SSH keys.
 type Config struct {
 	Organizations []*Organization `json:"organizations" koanf:"organizations"` // List of organizations and their SSH keys
+}
+
+func (c *Config) JSON() ([]byte, error) {
+	return json.Marshal(c)
 }
 
 // RemoveOrganization removes an organization from the Config by its name.

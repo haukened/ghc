@@ -37,20 +37,16 @@ var (
 //
 // Returns an error if any of the steps fail.
 func setOrganization(ctx context.Context, c *cli.Command) error {
+	// check if the command has the correct number of arguments
+	// this will ensure neither arg is empty so we don't need to check for that
 	const nargs = 2
 	if c.NArg() != nargs {
 		return fmt.Errorf("%w: expected %d, got %d", ErrNumArguments, nargs, c.NArg())
 	}
 
 	orgName := c.Args().Get(0)
-	if orgName == "" {
-		return domain.ErrEmptyOrganizationName
-	}
-
 	sshKeyPath := c.Args().Get(1)
-	if sshKeyPath == "" {
-		return domain.ErrEmptySSHKeyPath
-	}
+
 	// expand the path to the SSH key
 	sshKeyPath = utils.ExpandPath(sshKeyPath)
 
@@ -93,13 +89,10 @@ func setOrganization(ctx context.Context, c *cli.Command) error {
 func removeOrganization(ctx context.Context, c *cli.Command) error {
 	const nargs = 1
 	if c.NArg() != nargs {
-		return fmt.Errorf("%s: expected %d, got %d", ErrNumArguments, nargs, c.Args().Len())
+		return fmt.Errorf("%w: expected %d, got %d", ErrNumArguments, nargs, c.Args().Len())
 	}
 
 	orgName := c.Args().Get(0)
-	if orgName == "" {
-		return domain.ErrEmptyOrganizationName
-	}
 
 	// read the current config
 	conf, err := configfile.LoadConfig()
@@ -133,7 +126,7 @@ func listOrganizations(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if conf.Organizations == nil {
+	if len(conf.Organizations) == 0 {
 		return domain.ErrNoOrganizations
 	}
 

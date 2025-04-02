@@ -15,6 +15,19 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+func WriteConfigFileForTest(t *testing.T, filepath string, content []byte) {
+	t.Helper()
+	f, err := os.Create(filepath)
+	if err != nil {
+		t.Fatalf("failed to create test config file: %v", err)
+	}
+	defer f.Close()
+	_, err = f.Write(content)
+	if err != nil {
+		t.Fatalf("failed to write to test config file: %v", err)
+	}
+}
+
 func GenerateTestSSHKey(t *testing.T) (privateKeyPath, publicKeyPath string) {
 	// This function generates a temporary RSA key pair for testing purposes.
 	t.Helper()

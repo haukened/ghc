@@ -1,13 +1,14 @@
 package domain
 
-import "fmt"
+import "errors"
 
 var (
-	ErrEmptyOrganizationName = fmt.Errorf("organization name cannot be empty")
-	ErrEmptySSHKeyPath       = fmt.Errorf("SSH key path cannot be empty")
-	ErrNoOrganizations       = fmt.Errorf("no organizations found in the configuration")
-	ErrDuplicateOrganization = fmt.Errorf("duplicate organization name found")
-	ErrInvalidOrgName        = fmt.Errorf("invalid organization name")
-	ErrCantRemoveDefault     = fmt.Errorf("cannot remove the default organization")
-	ErrOrganizationNotFound  = fmt.Errorf("organization not found")
+	ErrCantRemoveDefault     = errors.New("cannot remove the default organization")
+	ErrDuplicateOrganization = errors.New("duplicate organization name found")
+	ErrEmptyOrganizationName = errors.New("organization name cannot be empty")
+	ErrEmptySSHKeyPath       = errors.New("SSH key path cannot be empty")
+	ErrInvalidOrgName        = errors.New("invalid organization name")
+	ErrNoOrganizations       = errors.New("no organizations found in the configuration")
+	ErrOrganizationNotFound  = errors.New("organization not found")
+	ErrOrgNotFound           = errors.New("organization not found")
 )
