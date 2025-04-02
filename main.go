@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"ghc/internal/clone"
 	"os"
 
 	"github.com/urfave/cli/v3"
@@ -67,7 +68,7 @@ func main() {
 				Name:      "clone",
 				Category:  "Repository Management",
 				Usage:     "Clone a GitHub repository using the specified SSH key",
-				Action:    cloneRepo,
+				Action:    clone.CloneRepo,
 				ArgsUsage: "REPO_URL",
 			},
 		},
