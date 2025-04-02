@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/urfave/cli/v3"
@@ -65,18 +64,11 @@ func main() {
 				},
 			},
 			{
-				Name:     "clone",
-				Category: "Repository Management",
-				Usage:    "Clone a GitHub repository using the specified SSH key",
-				Action: func(ctx context.Context, c *cli.Command) error {
-					repo := c.Args().Get(0)
-					if repo == "" {
-						return fmt.Errorf("repository name is required")
-					}
-					log.Printf("Cloning repository: %s\n", repo)
-					// Here you would add the logic to clone the repository using the SSH key
-					return nil
-				},
+				Name:      "clone",
+				Category:  "Repository Management",
+				Usage:     "Clone a GitHub repository using the specified SSH key",
+				Action:    cloneRepo,
+				ArgsUsage: "REPO_URL",
 			},
 		},
 	}

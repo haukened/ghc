@@ -5,8 +5,82 @@ import (
 	"os"
 	"testing"
 
-	"github.com/haukened/ghc/internal/utils"
+	"ghc/internal/utils"
 )
+
+func TestJSON(t *testing.T) {
+	c := Config{
+		Organizations: []*Organization{
+			{Name: "org1", SSHKeyPath: "/path/to/key1", IsDefault: false},
+		},
+	}
+	jsonData, err := c.JSON()
+	if err != nil {
+		t.Fatalf("unable to marshal config to JSON: %v", err)
+	}
+	expectedJSON := `{"organizations":[{"name":"org1","ssh_key_path":"/path/to/key1","is_default":false}]}`
+	if string(jsonData) != expectedJSON {
+		t.Errorf("expected %s, got %s", expectedJSON, string(jsonData))
+	}
+}
+
+func TestGetKeyPathForOrg(t *testing.T) {
+	key1 := "/path/to/key1"
+	key2 := "/path/to/key2"
+
+	tests := []struct {
+		name        string
+		config      Config
+		orgName     string
+		expectsPath string
+		expectsErr  error
+	}{
+		{
+			name: "Get key path for existing organization",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: key1, IsDefault: false},
+					{Name: "org2", SSHKeyPath: key2, IsDefault: true},
+				},
+			},
+			orgName:     "org1",
+			expectsPath: key1,
+		},
+		{
+			name: "Get key path for non-existing organization",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: key1, IsDefault: false},
+					{Name: "org2", SSHKeyPath: key2, IsDefault: true},
+				},
+			},
+			orgName:     "org3",
+			expectsPath: key2,
+		},
+		{
+			name: "Detfault org does not exist",
+			config: Config{
+				Organizations: []*Organization{
+					{Name: "org1", SSHKeyPath: key1, IsDefault: false},
+				},
+			},
+			orgName:    "org2",
+			expectsErr: ErrNoDefaultOrg,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keyPath, err := tt.config.GetKeyPathForOrg(tt.orgName)
+			if err != nil && !errors.Is(err, ErrNoDefaultOrg) {
+				t.Errorf("expected %v, got %v", tt.expectsErr, err)
+			}
+			if keyPath != tt.expectsPath {
+				t.Errorf("expected %s, got %s", tt.expectsPath, keyPath)
+			}
+		})
+	}
+}
 
 func TestConfigValidate(t *testing.T) {
 	privateKey, _ := utils.GenerateTestSSHKey(t)

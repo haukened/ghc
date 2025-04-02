@@ -1,9 +1,10 @@
-module github.com/haukened/ghc
+module ghc
 
 go 1.24.1
 
 require (
 	github.com/fatih/color v1.18.0
+	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf v1.5.0
 	github.com/rodaine/table v1.3.0
 	github.com/urfave/cli/v3 v3.1.1

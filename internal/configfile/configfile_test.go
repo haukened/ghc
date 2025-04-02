@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/haukened/ghc/internal/domain"
+	"ghc/internal/domain"
 )
 
 func TestLoadConfig_FileNotFound(t *testing.T) {

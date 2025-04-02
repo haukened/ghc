@@ -13,8 +13,8 @@ import (
 	kjson "github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/file"
 
-	"github.com/haukened/ghc/internal/domain"
-	"github.com/haukened/ghc/internal/utils"
+	"ghc/internal/domain"
+	"ghc/internal/utils"
 )
 
 // DefaultConfigPath is the default path to the configuration file.

@@ -11,10 +11,11 @@ import (
 	"errors"
 	"fmt"
 
+	"ghc/internal/configfile"
+	"ghc/internal/domain"
+	"ghc/internal/utils"
+
 	"github.com/fatih/color"
-	"github.com/haukened/ghc/internal/configfile"
-	"github.com/haukened/ghc/internal/domain"
-	"github.com/haukened/ghc/internal/utils"
 	"github.com/rodaine/table"
 	"github.com/urfave/cli/v3"
 )

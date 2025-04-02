@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/haukened/ghc/internal/configfile"
-	"github.com/haukened/ghc/internal/domain"
-	"github.com/haukened/ghc/internal/utils"
+	"ghc/internal/configfile"
+	"ghc/internal/domain"
+	"ghc/internal/utils"
+
 	"github.com/urfave/cli/v3"
 )
 

@@ -3,9 +3,14 @@ package domain
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
+)
+
+var (
+	ErrNoDefaultOrg = errors.New("no default organization found")
 )
 
 // Config holds the configuration details for the application.
@@ -16,6 +21,22 @@ type Config struct {
 
 func (c *Config) JSON() ([]byte, error) {
 	return json.Marshal(c)
+}
+
+func (c *Config) GetKeyPathForOrg(name string) (string, error) {
+	// if the org exists, return the SSH key path
+	for _, org := range c.Organizations {
+		if org.Name == name {
+			return org.SSHKeyPath, nil
+		}
+	}
+	// otherwise, return the default SSH key path
+	for _, org := range c.Organizations {
+		if org.IsDefault {
+			return org.SSHKeyPath, nil
+		}
+	}
+	return "", ErrNoDefaultOrg
 }
 
 // RemoveOrganization removes an organization from the Config by its name.
