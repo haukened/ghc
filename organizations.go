@@ -39,7 +39,7 @@ var (
 func setOrganization(ctx context.Context, c *cli.Command) error {
 	const nargs = 2
 	if c.NArg() != nargs {
-		return fmt.Errorf("%w: expected %d, got %d", ErrNumArguments, nargs, c.Args().Len())
+		return fmt.Errorf("%w: expected %d, got %d", ErrNumArguments, nargs, c.NArg())
 	}
 
 	orgName := c.Args().Get(0)
